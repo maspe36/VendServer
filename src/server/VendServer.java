@@ -29,7 +29,7 @@ public class VendServer extends Application {
 	private String message;
 	
 	//Global parts of message 
-	//Current format is XX:MM-MM-MM-MM-MM-MM 
+	//Current format is MM-MM-MM-MM-MM-MM:XX 
 	//X = ItemSlot(A1, A2...), and M = MacAddress
 	String[] parts;
 	
@@ -91,7 +91,7 @@ public class VendServer extends Application {
 	class HandleAClient implements Runnable {
 		private Socket socket; // A connected socket
 		ObjectInputStream inputFromClient;
-		ObjectOutputStream outputToClient;
+		//ObjectOutputStream outputToClient;
 		/** Construct a thread */
 		public HandleAClient(Socket socket) {
 			this.socket = socket;
@@ -102,7 +102,7 @@ public class VendServer extends Application {
 			try {
 				// Create data input and output streams
 				inputFromClient = new ObjectInputStream(socket.getInputStream());
-				outputToClient = new ObjectOutputStream(socket.getOutputStream());
+				//outputToClient = new ObjectOutputStream(socket.getOutputStream());
 
 				// Continuously serve the client
 				while (true) {
@@ -111,7 +111,7 @@ public class VendServer extends Application {
 					
 					// Format message to SQL statement
 					message = Util.toSQL(message);
-					
+						
 					// Run against DB
 					queryServer(message);
 				}
@@ -126,18 +126,6 @@ public class VendServer extends Application {
 		launch(args);
 	}
 	
-	//Query the DB
-	public void queryServer(String msg){
-		try {
-			Statement stmt = conn.createStatement();
-			stmt.execute(msg);
-			ta.appendText("Recorded transaction in tVendLog" + "\n");
-		} catch (SQLException e) {
-			System.out.println(e.getMessage());
-			ta.appendText("Failed running the SQL against the database!" + "\n");
-		}
-	}
-	
 	//Continuously listen for a message from the client
 	public void ListenForClient(ObjectInputStream inputFromClient){
 		try {
@@ -147,9 +135,9 @@ public class VendServer extends Application {
 			
 			Platform.runLater(() -> {
 				ta.appendText("Message received from " + parts[0] +  " : " + parts[1] + "\n");
-			});
+			});	
 		} catch (IOException e) {
-			ta.appendText("Error while listening for client messages!" + "\n");
+			ta.appendText("Error recieving messages from Client!" + "\n");
 		}
 	}
 	
@@ -165,9 +153,21 @@ public class VendServer extends Application {
 		
 		//Connect method returns a null connection if it was not a successful connection
 		if(conn != null){
-			ta.appendText("Successfully Connected to DataBase!");
+			ta.appendText("Successfully Connected to DataBase!" + "\n");
 		}else{
-			ta.appendText("Connection to the db timed out. Please check your connection.");
+			ta.appendText("Connection to the db timed out. Please check your connection." + "\n");
+		}
+	}
+	
+	//Query the DB
+	public void queryServer(String msg){
+		try {
+			Statement stmt = conn.createStatement();
+			stmt.execute(msg);
+			ta.appendText("Recorded transaction in tVendLog" + "\n");
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+			ta.appendText("Failed running the SQL against the database!" + "\n");
 		}
 	}
 }

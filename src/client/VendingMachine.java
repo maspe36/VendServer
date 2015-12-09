@@ -1,8 +1,7 @@
 package client;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -12,7 +11,7 @@ import server.Util;
 public class VendingMachine{
 
 	ObjectOutputStream toServer;
-	ObjectInputStream isFromServer;
+	//ObjectInputStream isFromServer;
 
 	String chat;
 	static String ip = "localhost";
@@ -27,6 +26,9 @@ public class VendingMachine{
 		client.initialize();
 	}
 	
+	/**
+	 * Open the connection to the server at localhost on port 8000
+	 */
 	public void initialize() {
 		try{
 			//create a socket to connect to server
@@ -35,7 +37,7 @@ public class VendingMachine{
 
 			toServer = new ObjectOutputStream(connectToServer.getOutputStream());
 			toServer.flush();
-			isFromServer = new ObjectInputStream(connectToServer.getInputStream());
+			//isFromServer = new ObjectInputStream(connectToServer.getInputStream());
 			System.out.println("Connected!");
 		}
 		catch(IOException ex){ 
@@ -43,10 +45,16 @@ public class VendingMachine{
 		}
 		//constantly be ready to send messages
 		writeToServer();
+		
+		/*Removing ability to receive messages for now as Vending Machines don't need to do this.
 		//constantly search for messages
 		HandleAMessage();
+		*/
 	}
 
+	/**
+	 * Writes to the Server in plain text on nextLine(). Sends with the format of MacAddress:ItemSlot
+	 */
 	protected void writeToServer(){
 		Thread writingMessage = new Thread() {
 			public void run(){
@@ -67,6 +75,7 @@ public class VendingMachine{
 		writingMessage.start();
 	}
 
+	/* Removing the ability to receive messages for the time being as Vending Machines don't need it.
 	protected void HandleAMessage(){
 		Thread messageHandling = new Thread() {
 			public void run(){
@@ -83,5 +92,6 @@ public class VendingMachine{
 		};
 		messageHandling.start();
 	}
+	*/
 }
 	

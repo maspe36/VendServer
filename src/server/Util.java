@@ -12,7 +12,7 @@ public class Util {
 	
 	// TO-DO change to a prepared statement
 	public static String toSQL(String msg){
-		//Current format is XX:MM-MM-MM-MM-MM-MM 
+		//Current format is MM-MM-MM-MM-MM-MM:XX 
 		//X = ItemSlot(A1, A2...), and M = MacAddress
 		String[] parts = msg.split(":");
 		String sellSqlStatement = "INSERT INTO tVendLog (MacAddress, ItemLocation) "

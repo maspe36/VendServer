@@ -13,7 +13,14 @@ public class DatabaseInterface {
 		try {
 			//Driver d = (Driver)Class.forName("com.microsoft.jdbc.sqlserver.SQLServerDriver").newInstance();
    			Driver d = (Driver)Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver").newInstance();
-
+   			
+   			//Make sure a JDBC compliant driver is being loaded. It's not actually useful just to get rid of the annoying yellow lines.
+   			System.out.println("Checking if driver is a genuine JDBC Compliant driver...");
+   			if(d.jdbcCompliant()){
+   				System.out.println("This driver is JDBC Compliant");
+   			}else{
+   				System.out.println("This driver is not JDBC Compliant, proceed with caution.");
+   			}
 		} catch (java.lang.ClassNotFoundException e) {
 			System.err.println("ClassNotFoundException: " + e.getMessage());
 		} catch (InstantiationException e) {
