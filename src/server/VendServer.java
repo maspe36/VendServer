@@ -24,11 +24,16 @@ public class VendServer extends Application {
 	
 	// Number a client
 	private int clientNo = 0;
+	
 	//global message var
 	private String message;
-	//Global parts of message
+	
+	//Global parts of message 
+	//Current format is XX:MM-MM-MM-MM-MM-MM 
+	//X = ItemSlot(A1, A2...), and M = MacAddress
 	String[] parts;
-	//private String backup;
+	
+	//List of all clients threads that are handled by the server, unused currently
 	ArrayList<HandleAClient> list = new ArrayList<HandleAClient>();
 
 	@SuppressWarnings("resource")
@@ -103,11 +108,12 @@ public class VendServer extends Application {
 				while (true) {
 					// Receive message from the client
 					ListenForClient(inputFromClient);
+					
 					// Format message to SQL statement
 					message = Util.toSQL(message);
+					
 					// Run against DB
 					queryServer(message);
-					// Send success or failure
 				}
 			}
 			catch(IOException ex) {
@@ -152,12 +158,13 @@ public class VendServer extends Application {
 		DatabaseInterface db = new DatabaseInterface();
 		System.out.println("Driver Loaded");
 		
+		// address to connect to my database
 		conn = db.Connect("il-server-001.uccc.uc.edu\\mssqlserver2012",
 				"privetsl", 
 				"Maspe36Miami");
 		
+		//Connect method returns a null connection if it was not a successful connection
 		if(conn != null){
-			// address to connect to my database
 			ta.appendText("Successfully Connected to DataBase!");
 		}else{
 			ta.appendText("Connection to the db timed out. Please check your connection.");

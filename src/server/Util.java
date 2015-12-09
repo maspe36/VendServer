@@ -6,7 +6,14 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 
 public class Util {
+	/*
+	 * SUSCEPTIBLE TO A SQL INJECTION
+	 */
+	
+	// TO-DO change to a prepared statement
 	public static String toSQL(String msg){
+		//Current format is XX:MM-MM-MM-MM-MM-MM 
+		//X = ItemSlot(A1, A2...), and M = MacAddress
 		String[] parts = msg.split(":");
 		String sellSqlStatement = "INSERT INTO tVendLog (MacAddress, ItemLocation) "
 								+ "VALUES('" + parts[0] + "', '" + parts[1] + "')";
