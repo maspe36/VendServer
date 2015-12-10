@@ -3,21 +3,20 @@ package server;
 import java.io.*;
 import java.net.*;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
 public class VendServer extends Application {
 	// Text area for displaying contents
-	private TextArea ta = new TextArea();
+	private TextArea Log = new TextArea();
 
 	//Setup the connection to the DB
 	Connection conn = null;
@@ -27,6 +26,9 @@ public class VendServer extends Application {
 	
 	//global message var
 	private String message;
+	
+	private PreparedStatement SQLQuery;
+	private String PlainTextSQL;
 	
 	//Global parts of message 
 	//Current format is MM-MM-MM-MM-MM-MM:XX 
@@ -42,11 +44,16 @@ public class VendServer extends Application {
 	@Override // Override the start method in the Application class
 	public void start(Stage primaryStage) {
 		// Create a scene and place it in the stage
-		Scene scene = new Scene(new ScrollPane(ta), 450, 200);
+		Scene scene = new Scene(Log);
 		primaryStage.setTitle("VendServer"); // Set the stage title
 		primaryStage.setScene(scene); // Place the scene in the stage
 		primaryStage.show(); // Display the stage
-
+		Log.setWrapText(true); //WordWrap
+		
+		//Dynamically size the Textarea to the size of the window
+		Log.prefWidthProperty().bind(scene.widthProperty());
+		Log.prefHeightProperty().bind(scene.heightProperty());
+		
 		//New server thread
 		clientThread();
 	}
@@ -57,7 +64,7 @@ public class VendServer extends Application {
 			try {
 				// Create a server socket
 				ServerSocket serverSocket = new ServerSocket(8000);
-				Platform.runLater( () -> {ta.appendText("VendServer started at " 
+				Platform.runLater( () -> {Log.appendText("VendServer started at " 
 						+ new Date() + '\n');});
 
 				DBConnect();
@@ -71,14 +78,14 @@ public class VendServer extends Application {
 
 					Platform.runLater( () -> {
 						// Display the client number
-						ta.appendText("Starting thread for client " + clientNo +
+						Log.appendText("Starting thread for client " + clientNo +
 								" at " + new Date() + '\n');
 
 						// Find the client's host name, and IP address
 						InetAddress inetAddress = socket.getInetAddress();
-						ta.appendText("Client " + clientNo + "'s host name is "
+						Log.appendText("Client " + clientNo + "'s host name is "
 								+ inetAddress.getHostName() + "\n");
-						ta.appendText("Client " + clientNo + "'s IP Address is "
+						Log.appendText("Client " + clientNo + "'s IP Address is "
 								+ inetAddress.getHostAddress() + "\n");
 					});
 
@@ -123,10 +130,13 @@ public class VendServer extends Application {
 					ListenForClient(inputFromClient);
 					
 					// Format message to SQL statement
-					message = Util.toSQL(message);
+					SQLQuery = Util.toSQL(message, conn);
 						
+					//Grabs the unsafe SQL in plain text
+					PlainTextSQL = Util.toSQL(message);
+					
 					// Run against DB
-					queryServer(message);
+					queryServer(SQLQuery, PlainTextSQL);
 				}
 			}
 			catch(IOException ex) {
@@ -154,10 +164,10 @@ public class VendServer extends Application {
 			ItemSlot = parts[1];
 			
 			Platform.runLater(() -> {
-				ta.appendText("Message received from " + MacAddress +  ": " +ItemSlot + "\n");
+				Log.appendText("Message received from " + MacAddress +  ": " +ItemSlot + "\n");
 			});	
 		} catch (IOException e) {
-			ta.appendText("Error recieving messages from Client!" + "\n");
+			Log.appendText("Error recieving messages from Client!" + "\n");
 		}
 	}
 	
@@ -176,9 +186,9 @@ public class VendServer extends Application {
 		
 		//Connect method returns a null connection if it was not a successful connection
 		if(conn != null){
-			ta.appendText("Successfully Connected to DataBase!" + "\n");
+			Log.appendText("Successfully Connected to DataBase!" + "\n");
 		}else{
-			ta.appendText("Connection to the db timed out. Please check your connection." + "\n");
+			Log.appendText("Connection to the db timed out. Please check your connection." + "\n");
 		}
 	}
 	
@@ -187,14 +197,14 @@ public class VendServer extends Application {
 	 * Runs the provided Query against the database that is currently connected.
 	 * @param SQLQuery
 	 */
-	public void queryServer(String SQLQuery){
+	public void queryServer(PreparedStatement SQLQuery, String SQLClone){
 		try {
-			Statement stmt = conn.createStatement();
-			stmt.execute(SQLQuery);
-			ta.appendText("Query successfully run against Database!" + "\n");
+			Log.appendText("Attempting to run the following SQL against the connected DB... \n '" + SQLClone + "'\n");
+			SQLQuery.executeUpdate();
+			Log.appendText("Success!" + "\n");
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
-			ta.appendText("Failed running the SQL against the database!" + "\n");
+			Log.appendText("Failed running the SQL against the database!" + "\n");
 		}
 	}
 }

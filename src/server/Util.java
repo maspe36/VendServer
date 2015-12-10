@@ -4,20 +4,62 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 public class Util {
-	/*
-	 * SUSCEPTIBLE TO A SQL INJECTION
+	/**
+	 * Takes in a string and a connection to create a PreparedStatement
+	 * 
+	 * @param msg Message from client to be formatted
+	 * @param conn Conenction to the DB
+	 * @return PreparedStatement of the SQL to be run
 	 */
-	
-	// TO-DO change to a prepared statement
-	public static String toSQL(String msg){
+	public static PreparedStatement toSQL(String msg, Connection conn){
 		//Current format is MM-MM-MM-MM-MM-MM:XX 
 		//X = ItemSlot(A1, A2...), and M = MacAddress
 		String[] parts = msg.split(":");
-		String sellSqlStatement = "INSERT INTO tVendLog (MacAddress, ItemLocation) "
-								+ "VALUES('" + parts[0] + "', '" + parts[1] + "')";
-		return sellSqlStatement;
+		
+		String MacAddress = parts[0];
+		String ItemSlot = parts[1];
+		
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = conn.prepareStatement("INSERT INTO tVendLog (MacAddress, ItemLocation) "
+								+ "VALUES(?,?)");
+			
+			pstmt.setString(1, MacAddress);
+			pstmt.setString(2, ItemSlot);
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return pstmt;
+	}
+	
+	/**
+	 * 
+	 * Takes a String and returns a String formatted to a SQL statement. 
+	 * 
+	 * WARNING:
+	 * Do not run the returned string against the DB, 
+	 * this format is susceptible to a SQL Injection attack.
+	 * 
+	 * @param msg Message from client to be formatted
+	 * @return SQL in a string format
+	 */
+	public static String toSQL(String msg){
+		String[] parts = msg.split(":");
+		
+		String MacAddress = parts[0];
+		String ItemSlot = parts[1];
+		
+		String SQLQuery = "INSERT INTO tVendLog (MacAddress, ItemLocation) "
+		+ "VALUES(" + MacAddress + ", " + ItemSlot + ")";
+		
+		return SQLQuery;
 	}
 	
 	public static String getMacAddress(){
