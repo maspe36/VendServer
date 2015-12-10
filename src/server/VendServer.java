@@ -33,10 +33,12 @@ public class VendServer extends Application {
 	//X = ItemSlot(A1, A2...), and M = MacAddress
 	String[] parts;
 	
+	String MacAddress;
+	String ItemSlot;
+	
 	//List of all clients threads that are handled by the server, unused currently
 	ArrayList<HandleAClient> list = new ArrayList<HandleAClient>();
 
-	@SuppressWarnings("resource")
 	@Override // Override the start method in the Application class
 	public void start(Stage primaryStage) {
 		// Create a scene and place it in the stage
@@ -46,6 +48,11 @@ public class VendServer extends Application {
 		primaryStage.show(); // Display the stage
 
 		//New server thread
+		clientThread();
+	}
+	
+	@SuppressWarnings("resource")
+	private void clientThread(){
 		new Thread( () -> {
 			try {
 				// Create a server socket
@@ -87,7 +94,13 @@ public class VendServer extends Application {
 		}).start();
 	}
 
-	// Define the thread class for handling new connection
+	/**
+	 * The constructor creates the relationship between a client thread 
+	 * and a new socket to connect them to the server. Contains methods to handle interactions
+	 * with the client.
+	 * @author Sam Privett
+	 *
+	 */
 	class HandleAClient implements Runnable {
 		private Socket socket; // A connected socket
 		ObjectInputStream inputFromClient;
@@ -97,7 +110,7 @@ public class VendServer extends Application {
 			this.socket = socket;
 		}
 
-		/** Run a thread */
+		/** Create a new thread to serve a single client */
 		public void run() {
 			try {
 				// Create data input and output streams
@@ -126,22 +139,32 @@ public class VendServer extends Application {
 		launch(args);
 	}
 	
-	//Continuously listen for a message from the client
+	/**
+	 * Listen for messages from the client and write if it was a success or failure to the Server log.
+	 * @param inputFromClient
+	 */
 	public void ListenForClient(ObjectInputStream inputFromClient){
 		try {
 			message = inputFromClient.readUTF();
 
 			parts = message.split(":");
 			
+			//For readability
+			MacAddress = parts[0];
+			ItemSlot = parts[1];
+			
 			Platform.runLater(() -> {
-				ta.appendText("Message received from " + parts[0] +  " : " + parts[1] + "\n");
+				ta.appendText("Message received from " + MacAddress +  ": " +ItemSlot + "\n");
 			});	
 		} catch (IOException e) {
 			ta.appendText("Error recieving messages from Client!" + "\n");
 		}
 	}
 	
-	//Connect to the database
+	/**
+	 * Connect to the database at il-server-001.uccc.uc.edu with the privetsl credentials.
+	 * Writes to server log whether it was a success or failure
+	 */
 	public void DBConnect(){				
 		DatabaseInterface db = new DatabaseInterface();
 		System.out.println("Driver Loaded");
@@ -159,12 +182,16 @@ public class VendServer extends Application {
 		}
 	}
 	
-	//Query the DB
-	public void queryServer(String msg){
+	/**
+	 * Requires a connection to a database.
+	 * Runs the provided Query against the database that is currently connected.
+	 * @param SQLQuery
+	 */
+	public void queryServer(String SQLQuery){
 		try {
 			Statement stmt = conn.createStatement();
-			stmt.execute(msg);
-			ta.appendText("Recorded transaction in tVendLog" + "\n");
+			stmt.execute(SQLQuery);
+			ta.appendText("Query successfully run against Database!" + "\n");
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 			ta.appendText("Failed running the SQL against the database!" + "\n");

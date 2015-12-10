@@ -15,7 +15,6 @@ public class VendingMachine{
 
 	String chat;
 	static String ip = "localhost";
-
 	String MacAddress = Util.getMacAddress();
 	
 	Scanner sys = new Scanner(System.in);
