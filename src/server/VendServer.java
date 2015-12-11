@@ -119,31 +119,37 @@ public class VendServer extends Application {
 
 		/** Create a new thread to serve a single client */
 		public void run() {
-			try {
 				// Create data input and output streams
-				inputFromClient = new ObjectInputStream(socket.getInputStream());
+				try {
+					inputFromClient = new ObjectInputStream(socket.getInputStream());
+				} catch (IOException Ioe) {
+					// TODO Auto-generated catch block
+					Ioe.printStackTrace();
+				}
 				//outputToClient = new ObjectOutputStream(socket.getOutputStream());
 
 				// Continuously serve the client
 				while (true) {
-					// Receive message from the client
-					ListenForClient(inputFromClient);
-					
-					// Format message to SQL statement
-					SQLQuery = Util.toSQL(message, conn);
+					try {
+						// Receive message from the client
+						ListenForClient(inputFromClient);
 						
-					//Grabs the unsafe SQL in plain text
-					PlainTextSQL = Util.toSQL(message);
+						// Format message to SQL statement
+						SQLQuery = Util.toSQL(message, conn);
+						
+						//Grabs the unsafe SQL in plain text
+						PlainTextSQL = Util.toSQL(message);
 					
-					// Run against DB
-					queryServer(SQLQuery, PlainTextSQL);
+						// Run against DB
+						queryServer(SQLQuery, PlainTextSQL);
+					}catch (IOException Ioe) {
+						Log.appendText("ERROR: Connection to client has been lost!");
+					}catch(Exception ex){
+						Log.appendText("ERROR: Invalid input from client!");
+					}
 				}
 			}
-			catch(IOException ex) {
-				ex.printStackTrace();
-			}    
 		}
-	}
 
 	public static void main(String[] args) {
 		launch(args);
@@ -151,24 +157,19 @@ public class VendServer extends Application {
 	
 	/**
 	 * Listen for messages from the client and write if it was a success or failure to the Server log.
-	 * @param inputFromClient
+	 * @param inputFromClient ObjectInputStream
+	 * @throws IOException Connection has been lost to ObjectInputStream
 	 */
-	public void ListenForClient(ObjectInputStream inputFromClient){
-		try {
-			message = inputFromClient.readUTF();
+	public void ListenForClient(ObjectInputStream inputFromClient) throws IOException{
+		message = inputFromClient.readUTF();
 
-			parts = message.split(":");
+		parts = message.split(":");
 			
-			//For readability
-			MacAddress = parts[0];
-			ItemSlot = parts[1];
-			
-			Platform.runLater(() -> {
-				Log.appendText("Message received from " + MacAddress +  ": " +ItemSlot + "\n");
-			});	
-		} catch (IOException e) {
-			Log.appendText("Error recieving messages from Client!" + "\n");
-		}
+		//For readability
+		MacAddress = parts[0];
+		ItemSlot = parts[1];
+		
+		Log.appendText("Message received from " + MacAddress +  ": " +ItemSlot + "\n");	
 	}
 	
 	/**
@@ -181,14 +182,14 @@ public class VendServer extends Application {
 		
 		// address to connect to my database
 		conn = db.Connect("il-server-001.uccc.uc.edu\\mssqlserver2012",
-				"privetsl", 
+				"CandyServerLogin", 
 				"Maspe36Miami");
 		
 		//Connect method returns a null connection if it was not a successful connection
 		if(conn != null){
 			Log.appendText("Successfully Connected to DataBase!" + "\n");
 		}else{
-			Log.appendText("Connection to the db timed out. Please check your connection." + "\n");
+			Log.appendText("ERROR: Connection to the db timed out. Please check your connection." + "\n");
 		}
 	}
 	
@@ -200,11 +201,16 @@ public class VendServer extends Application {
 	public void queryServer(PreparedStatement SQLQuery, String SQLClone){
 		try {
 			Log.appendText("Attempting to run the following SQL against the connected DB... \n '" + SQLClone + "'\n");
-			SQLQuery.executeUpdate();
-			Log.appendText("Success!" + "\n");
+			//If it runs and there is a result
+			if(SQLQuery.executeUpdate() > 0){
+				Log.appendText("Success!" + "\n");
+			}else{
+				//Runs but no rows affected
+				Log.appendText("The SQL ran succesfully but there were no rows affected!" + "\n");
+			}
+			//Cannot have a negative quantity, EX Selling a product when there is zero in stock
 		} catch (SQLException e) {
-			System.out.println(e.getMessage());
-			Log.appendText("Failed running the SQL against the database!" + "\n");
+			Log.appendText("ERROR: Quantity cannot be negative!" + "\n");
 		}
 	}
 }
