@@ -123,30 +123,24 @@ public class VendServer extends Application {
 				try {
 					inputFromClient = new ObjectInputStream(socket.getInputStream());
 				} catch (IOException Ioe) {
-					// TODO Auto-generated catch block
-					Ioe.printStackTrace();
+					//Set to null so we can catch the connection time out error farther down..
+					inputFromClient = null;
 				}
 				//outputToClient = new ObjectOutputStream(socket.getOutputStream());
 
 				// Continuously serve the client
 				while (true) {
-					try {
-						// Receive message from the client
-						ListenForClient(inputFromClient);
+					// Receive message from the client
+					ListenForClient(inputFromClient);
 						
-						// Format message to SQL statement
-						SQLQuery = Util.toSQL(message, conn);
-						
-						//Grabs the unsafe SQL in plain text
-						PlainTextSQL = Util.toSQL(message);
+					// Format message to SQL statement
+					SQLQuery = Util.toSQL(message, conn);
 					
-						// Run against DB
-						queryServer(SQLQuery, PlainTextSQL);
-					}catch (IOException Ioe) {
-						Log.appendText("ERROR: Connection to client has been lost!");
-					}catch(Exception ex){
-						Log.appendText("ERROR: Invalid input from client!");
-					}
+					//Grabs the unsafe SQL in plain text
+					PlainTextSQL = Util.toSQL(message);
+				
+					// Run against DB
+					queryServer(SQLQuery, PlainTextSQL);
 				}
 			}
 		}
@@ -160,16 +154,22 @@ public class VendServer extends Application {
 	 * @param inputFromClient ObjectInputStream
 	 * @throws IOException Connection has been lost to ObjectInputStream
 	 */
-	public void ListenForClient(ObjectInputStream inputFromClient) throws IOException{
-		message = inputFromClient.readUTF();
+	public void ListenForClient(ObjectInputStream inputFromClient){
+		try {
+			message = inputFromClient.readUTF();
 
-		parts = message.split(":");
+			parts = message.split(":");
 			
-		//For readability
-		MacAddress = parts[0];
-		ItemSlot = parts[1];
+			//For readability
+			MacAddress = parts[0];
+			ItemSlot = parts[1];
 		
-		Log.appendText("Message received from " + MacAddress +  ": " +ItemSlot + "\n");	
+			Log.appendText("Message received from " + MacAddress +  ": " +ItemSlot + "\n");	
+		} catch (IOException e) {
+			//TO-DO: Add a way to specify which client is gone
+			System.out.println("This error fires");
+			Log.appendText("ERROR: Connection to client has been lost!");
+		}
 	}
 	
 	/**

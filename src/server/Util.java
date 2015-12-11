@@ -6,6 +6,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 public class Util {
 	/**
@@ -15,7 +16,7 @@ public class Util {
 	 * @param conn Conenction to the DB
 	 * @return PreparedStatement of the SQL to be run
 	 */
-	public static PreparedStatement toSQL(String msg, Connection conn) throws Exception{
+	public static PreparedStatement toSQL(String msg, Connection conn){
 		//Current format is MM-MM-MM-MM-MM-MM:XX 
 		//X = ItemSlot(A1, A2...), and M = MacAddress
 		String[] parts = msg.split(":");
@@ -25,17 +26,21 @@ public class Util {
 		
 		PreparedStatement pstmt = null;
 		
-		pstmt = conn.prepareStatement
-			   ("UPDATE tVendingMachine_Product " +
-				"SET Quantity = (Quantity - 1) " +
-				"FROM dbo.tVendingMachine " + 
-				"INNER JOIN dbo.tVendingMachine_Product " +
-				"ON dbo.tVendingMachine.VendingMachineID = dbo.tVendingMachine_Product.VendingMachineID " +
-				"WHERE MacAddress = ? AND ItemSlot = ?;");
+		try {
+			pstmt = conn.prepareStatement
+				   ("UPDATE tVendingMachine_Product " +
+					"SET Quantity = (Quantity - 1) " +
+					"FROM dbo.tVendingMachine " + 
+					"INNER JOIN dbo.tVendingMachine_Product " +
+					"ON dbo.tVendingMachine.VendingMachineID = dbo.tVendingMachine_Product.VendingMachineID " +
+					"WHERE MacAddress = ? AND ItemSlot = ?;");
 			
-		pstmt.setString(1, MacAddress);
-		pstmt.setString(2, ItemSlot);
-		
+			pstmt.setString(1, MacAddress);
+			pstmt.setString(2, ItemSlot);
+			
+		} catch (SQLException e) {
+			System.out.println("ERROR: Preparing the PreparedStatement");
+		}
 		return pstmt;
 	}
 	
