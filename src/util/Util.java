@@ -1,12 +1,12 @@
-package server;
+package util;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Enumeration;
 
 public class Util {
 	/**
@@ -73,32 +73,31 @@ public class Util {
 	}
 	
 	public static String getMacAddress(){
-		InetAddress ip;
-		
 		try {
-			ip = InetAddress.getLocalHost();
-			System.out.println("Current IP address : " + ip.getHostAddress());
-			
-			NetworkInterface network = NetworkInterface.getByInetAddress(ip);
-			byte[] mac = network.getHardwareAddress();	
-			
-			System.out.print("Current MAC address : ");			
-			StringBuilder sb = new StringBuilder();
-			
-			for (int i = 0; i < mac.length; i++) {
-				sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));		
+			for (Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces(); e.hasMoreElements();) {
+				NetworkInterface n = e.nextElement();
+			    //System.out.println(n.getDisplayName());
+			    byte[] mac = n.getHardwareAddress();
+			    // Convert bytes to printable hex digits
+			    if (mac != null) {
+			    	Enumeration<InetAddress> myInetAddress = n.getInetAddresses();
+			    	// Is there an IP address associated with this network interface?
+			    	if (myInetAddress.hasMoreElements()) {
+				    	//System.out.println(myInetAddress.nextElement().toString());
+				    	StringBuilder sb = new StringBuilder();
+				    	for(int i = 0; i < mac.length; i++) {
+				    		sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+				    	}
+				    	if(sb.length() == 17){
+				    		return sb.toString();
+				    	}
+				    }
+			    }
 			}
-			System.out.println(sb.toString());
-			
-			return sb.toString();
-			
-		} catch (UnknownHostException e) {	
-			e.printStackTrace();	
-		} catch (SocketException e){		
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 		return null;
-		
 	}
 }

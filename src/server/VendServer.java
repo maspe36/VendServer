@@ -13,6 +13,8 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
+import util.DatabaseInterface;
+import util.Util;
 
 public class VendServer extends Application {
 	// Text area for displaying contents
@@ -125,6 +127,7 @@ public class VendServer extends Application {
 				} catch (IOException Ioe) {
 					//Set to null so we can catch the connection time out error farther down..
 					inputFromClient = null;
+					Log.appendText("ERROR: Connection to client has been lost!");
 				}
 				//outputToClient = new ObjectOutputStream(socket.getOutputStream());
 
@@ -136,7 +139,7 @@ public class VendServer extends Application {
 					// Format message to SQL statement
 					SQLQuery = Util.toSQL(message, conn);
 					
-					//Grabs the unsafe SQL in plain text
+					// Grabs the unsafe SQL in plain text
 					PlainTextSQL = Util.toSQL(message);
 				
 					// Run against DB
@@ -165,10 +168,13 @@ public class VendServer extends Application {
 			ItemSlot = parts[1];
 		
 			Log.appendText("Message received from " + MacAddress +  ": " +ItemSlot + "\n");	
-		} catch (IOException e) {
-			//TO-DO: Add a way to specify which client is gone
-			System.out.println("This error fires");
+		}catch (NullPointerException NPE){
 			Log.appendText("ERROR: Connection to client has been lost!");
+		}
+		catch (IOException e) {
+			//TO-DO: Add a way to specify which client is gone
+			Log.appendText("ERROR: Communication with the client has been interupted!" + "\n");
+			message = null;
 		}
 	}
 	

@@ -5,7 +5,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
 
-import server.Util;
+import util.Util;
 
 
 public class VendingMachine{
