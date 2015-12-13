@@ -16,7 +16,7 @@ public class Util {
 	 * @param conn Conenction to the DB
 	 * @return PreparedStatement of the SQL to be run
 	 */
-	public static PreparedStatement toSQL(String msg, Connection conn){
+	public static PreparedStatement toSQL(String msg, Connection conn)throws SQLException{
 		//Current format is MM-MM-MM-MM-MM-MM:XX 
 		//X = ItemSlot(A1, A2...), and M = MacAddress
 		String[] parts = msg.split(":");
@@ -39,7 +39,7 @@ public class Util {
 			pstmt.setString(2, ItemSlot);
 			
 		} catch (SQLException e) {
-			System.out.println("ERROR: Preparing the PreparedStatement");
+			throw new SQLException("ERROR: Could not run the ItemSale SQL Statement!");
 		}
 		return pstmt;
 	}

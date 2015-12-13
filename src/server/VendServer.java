@@ -121,32 +121,44 @@ public class VendServer extends Application {
 
 		/** Create a new thread to serve a single client */
 		public void run() {
-				// Create data input and output streams
-				try {
-					inputFromClient = new ObjectInputStream(socket.getInputStream());
-				} catch (IOException Ioe) {
-					//Set to null so we can catch the connection time out error farther down..
-					inputFromClient = null;
-					Log.appendText("ERROR: Connection to client has been lost!");
-				}
+			
+			boolean shutdown;
+			
+			// Create data input and output streams
+			try {
+				inputFromClient = new ObjectInputStream(socket.getInputStream());
 				//outputToClient = new ObjectOutputStream(socket.getOutputStream());
 
-				// Continuously serve the client
-				while (true) {
-					// Receive message from the client
-					ListenForClient(inputFromClient);
-						
-					// Format message to SQL statement
-					SQLQuery = Util.toSQL(message, conn);
-					
-					// Grabs the unsafe SQL in plain text
-					PlainTextSQL = Util.toSQL(message);
+				// set this to true to stop the thread
+				shutdown = false;
+
 				
-					// Run against DB
-					queryServer(SQLQuery, PlainTextSQL);
-				}
+				// Continuously serve the client
+				while (!shutdown) {
+						// Receive message from the client
+						ListenForClient(inputFromClient);
+						
+						// Format message to SQL statement
+						SQLQuery = Util.toSQL(message, conn);
+					
+						// Grabs the unsafe SQL in plain text
+						PlainTextSQL = Util.toSQL(message);
+				
+						// Run against DB
+						queryServer(SQLQuery, PlainTextSQL);
+				}	
+			}catch (SQLException sqlE){
+				//Recoverable error
+				Log.appendText(sqlE.getMessage() + "\n");
+			}catch(NullPointerException | IOException ConnectionEx){
+				//Recoverable error
+				Log.appendText(ConnectionEx.getMessage() + "\n");
+				Log.appendText("Closing thread for this client...");
+				//Close this thread if the connection to the client has been closed.
+				shutdown = true;
 			}
 		}
+	}
 
 	public static void main(String[] args) {
 		launch(args);
@@ -157,7 +169,7 @@ public class VendServer extends Application {
 	 * @param inputFromClient ObjectInputStream
 	 * @throws IOException Connection has been lost to ObjectInputStream
 	 */
-	public void ListenForClient(ObjectInputStream inputFromClient){
+	public void ListenForClient(ObjectInputStream inputFromClient)throws NullPointerException{
 		try {
 			message = inputFromClient.readUTF();
 
@@ -169,12 +181,11 @@ public class VendServer extends Application {
 		
 			Log.appendText("Message received from " + MacAddress +  ": " +ItemSlot + "\n");	
 		}catch (NullPointerException NPE){
-			Log.appendText("ERROR: Connection to client has been lost!");
+			throw new NullPointerException("ERROR: Connection to the client was lost!");
 		}
 		catch (IOException e) {
 			//TO-DO: Add a way to specify which client is gone
-			Log.appendText("ERROR: Communication with the client has been interupted!" + "\n");
-			message = null;
+			throw new NullPointerException("ERROR: Connection to the client was lost!");
 		}
 	}
 	
