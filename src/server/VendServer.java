@@ -33,10 +33,11 @@ public class VendServer extends Application {
 	private String PlainTextSQL;
 	
 	//Global parts of message 
-	//Current format is MM-MM-MM-MM-MM-MM:XX 
-	//X = ItemSlot(A1, A2...), and M = MacAddress
+	//Current format is P:MM-MM-MM-MM-MM-MM:XX 
+	//P = Protocol, X = ItemSlot(A1, A2...), and M = MacAddress
 	String[] parts;
 	
+	String Protocol;
 	String MacAddress;
 	String ItemSlot;
 	
@@ -122,40 +123,48 @@ public class VendServer extends Application {
 		/** Create a new thread to serve a single client */
 		public void run() {
 			
-			boolean shutdown;
+			boolean shutdown = false;
 			
 			// Create data input and output streams
 			try {
 				inputFromClient = new ObjectInputStream(socket.getInputStream());
 				//outputToClient = new ObjectOutputStream(socket.getOutputStream());
-
-				// set this to true to stop the thread
-				shutdown = false;
-
 				
 				// Continuously serve the client
 				while (!shutdown) {
 						// Receive message from the client
 						ListenForClient(inputFromClient);
 						
-						// Format message to SQL statement
-						SQLQuery = Util.toSQL(message, conn);
-					
-						// Grabs the unsafe SQL in plain text
-						PlainTextSQL = Util.toSQL(message);
-				
-						// Run against DB
-						queryServer(SQLQuery, PlainTextSQL);
+						if(Protocol.equals("3")){
+							//Close the clients connection and end the thread
+							Log.appendText("Connection closed by the client" + "\n");
+							closeClientThread(shutdown);
+							break;
+						}else{
+							
+							// Format message to SQL statement
+							SQLQuery = Util.toSQL(message, conn);
+						
+							if(SQLQuery != null){
+								// Grabs the unsafe SQL in plain text
+								PlainTextSQL = Util.toSQL(message);
+						
+								// Run against DB
+								queryServer(SQLQuery, PlainTextSQL);
+								
+								if(Protocol.equals("2")){
+									Log.appendText("WARNING: Fill the new Vending Machine!" + "\n");
+								}
+							}
+						}
 				}	
 			}catch (SQLException sqlE){
 				//Recoverable error
-				Log.appendText(sqlE.getMessage() + "\n");
+				Log.appendText(sqlE.getMessage());
 			}catch(NullPointerException | IOException ConnectionEx){
 				//Recoverable error
-				Log.appendText(ConnectionEx.getMessage() + "\n");
-				Log.appendText("Closing thread for this client...");
-				//Close this thread if the connection to the client has been closed.
-				shutdown = true;
+				Log.appendText(ConnectionEx.getMessage());
+				closeClientThread(shutdown);
 			}
 		}
 	}
@@ -176,16 +185,17 @@ public class VendServer extends Application {
 			parts = message.split(":");
 			
 			//For readability
-			MacAddress = parts[0];
-			ItemSlot = parts[1];
+			Protocol = parts[0];
+			MacAddress = parts[1];
+			ItemSlot = parts[2];
 		
-			Log.appendText("Message received from " + MacAddress +  ": " +ItemSlot + "\n");	
+			Log.appendText("Message received from " + Protocol + ":" + MacAddress +  ": " +ItemSlot + "\n");	
 		}catch (NullPointerException NPE){
-			throw new NullPointerException("ERROR: Connection to the client was lost!");
+			throw new NullPointerException("ERROR: Connection to the client was lost!" + "\n");
 		}
 		catch (IOException e) {
 			//TO-DO: Add a way to specify which client is gone
-			throw new NullPointerException("ERROR: Connection to the client was lost!");
+			throw new NullPointerException("ERROR: Connection to the client was lost!" + "\n");
 		}
 	}
 	
@@ -229,5 +239,14 @@ public class VendServer extends Application {
 		} catch (SQLException e) {
 			Log.appendText("ERROR: Quantity cannot be negative!" + "\n");
 		}
+	}
+	
+	private void closeClientThread(boolean shutdown){
+		//Close this thread if the connection to the client has been closed.
+		shutdown = true;
+		Log.appendText("Closing thread for this client..." + "\n");
+		//Decrement the amount of clients connected
+		clientNo--;
+		Log.appendText(clientNo + " client(s) connected");
 	}
 }

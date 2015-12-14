@@ -15,7 +15,13 @@ public class VendingMachine{
 
 	String chat;
 	static String ip = "localhost";
+	
+	//Current format is P:MM-MM-MM-MM-MM-MM:XX 
+	//P = Protocol, X = ItemSlot(A1, A2...), and M = MacAddress
+	
+	String Protocol = "2";
 	String MacAddress = Util.getMacAddress();
+	String ItemSold = "StartUpMessage"; //Needs to be initialized for the startup message
 	
 	Scanner sys = new Scanner(System.in);
 
@@ -38,6 +44,7 @@ public class VendingMachine{
 			toServer.flush();
 			//isFromServer = new ObjectInputStream(connectToServer.getInputStream());
 			System.out.println("Connected!");
+			startUpMessage();
 		}
 		catch(IOException ex){ 
 			System.out.println("Connection refused!");
@@ -59,8 +66,14 @@ public class VendingMachine{
 			public void run(){
 				while(true){
 					try{
+						//Grab the vendingmachine input
+						ItemSold = sys.nextLine();
+						
+						//Change the protocol depending on what the user enters
+						SetProtocol();
+						
 						//grab message to send and physical address of the client
-						String message =(MacAddress + ":" + sys.nextLine());
+						String message =(Protocol + ":" + MacAddress + ":" + ItemSold);
 
 						toServer.writeUTF(message);
 						toServer.flush(); // clear path
@@ -72,6 +85,23 @@ public class VendingMachine{
 			}
 		};
 		writingMessage.start();
+	}
+	
+	private void SetProtocol(){
+		if(ItemSold.equals("Bye")){
+			Protocol = "3";
+		}
+	}
+	
+	private void startUpMessage(){
+		try {
+			toServer.writeUTF(Protocol + ":" + MacAddress + ":" + ItemSold);
+			toServer.flush();
+			Protocol = "1";
+		}catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/* Removing the ability to receive messages for the time being as Vending Machines don't need it.
