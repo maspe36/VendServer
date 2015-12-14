@@ -41,6 +41,8 @@ public class VendServer extends Application {
 	String MacAddress;
 	String ItemSlot;
 	
+	boolean protocolFlag = false;
+	
 	//List of all clients threads that are handled by the server, unused currently
 	ArrayList<HandleAClient> list = new ArrayList<HandleAClient>();
 
@@ -135,12 +137,12 @@ public class VendServer extends Application {
 						// Receive message from the client
 						ListenForClient(inputFromClient);
 						
-						if(Protocol.equals("3")){
+						//if(Protocol.equals("3")){
 							//Close the clients connection and end the thread
-							Log.appendText("Connection closed by the client" + "\n");
-							closeClientThread(shutdown);
-							break;
-						}else{
+							//Log.appendText("Connection closed by the client" + "\n");
+							//closeClientThread(shutdown);
+							//break;
+						//}else{
 							
 							// Format message to SQL statement
 							SQLQuery = Util.toSQL(message, conn);
@@ -151,12 +153,11 @@ public class VendServer extends Application {
 						
 								// Run against DB
 								queryServer(SQLQuery, PlainTextSQL);
-								
-								if(Protocol.equals("2")){
-									Log.appendText("WARNING: Fill the new Vending Machine!" + "\n");
-								}
 							}
-						}
+							
+							HandleProtocol(Protocol, shutdown);
+							
+						//}
 				}	
 			}catch (SQLException sqlE){
 				//Recoverable error
@@ -230,14 +231,14 @@ public class VendServer extends Application {
 			Log.appendText("Attempting to run the following SQL against the connected DB... \n '" + SQLClone + "'\n");
 			//If it runs and there is a result
 			if(SQLQuery.executeUpdate() > 0){
-				Log.appendText("Success!" + "\n");
+				Log.appendText("Success!" + "\n\n");
 			}else{
 				//Runs but no rows affected
-				Log.appendText("The SQL ran succesfully but there were no rows affected!" + "\n");
+				Log.appendText("The SQL ran succesfully but there were no rows affected!" + "\n\n");
 			}
 			//Cannot have a negative quantity, EX Selling a product when there is zero in stock
 		} catch (SQLException e) {
-			Log.appendText("ERROR: Quantity cannot be negative!" + "\n");
+			Log.appendText("ERROR: Quantity cannot be negative!" + "\n\n");
 		}
 	}
 	
@@ -248,5 +249,28 @@ public class VendServer extends Application {
 		//Decrement the amount of clients connected
 		clientNo--;
 		Log.appendText(clientNo + " client(s) connected");
+	}
+	
+	private void HandleProtocol(String Protocol, boolean shutdown){
+		
+		char charProto = Protocol.charAt(0);
+		
+		switch(charProto){
+			case '2': // New vend machine protocol
+				//Because SQLQuery will be null if the machine was found, see Util.toSQL
+				if(SQLQuery != null){
+					Log.appendText("WARNING: Fill the new Vending Machine!" + "\n");
+				}else{
+					Log.appendText("Found Vending Machine in Database!" + "\n");
+				}
+				break;
+			case '3': // Client leaving protocol
+				Log.appendText("Connection closed by the client" + "\n");
+				closeClientThread(shutdown);
+				protocolFlag = true;
+				break;
+		}
+		
+			
 	}
 }

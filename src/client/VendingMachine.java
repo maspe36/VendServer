@@ -74,7 +74,9 @@ public class VendingMachine{
 						//If ItemSold is not equal
 						if(!ItemSold.equals("")){
 							//Change the protocol depending on what the user enters
-							SetProtocol();
+							if(SetProtocol()){
+								System.exit(0); //close program if user typed bye
+							}
 							
 							//grab message to send and physical address of the client
 							String message =(Protocol + ":" + MacAddress + ":" + ItemSold);
@@ -95,10 +97,12 @@ public class VendingMachine{
 		writingMessage.start();
 	}
 	
-	private void SetProtocol(){
+	private boolean SetProtocol(){
 		if(ItemSold.equals("BYE")){
 			Protocol = "3";
+			return true;
 		}
+		return false;
 	}
 	
 	private void startUpMessage(){
