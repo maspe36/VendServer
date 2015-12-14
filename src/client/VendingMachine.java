@@ -66,17 +66,25 @@ public class VendingMachine{
 			public void run(){
 				while(true){
 					try{
-						//Grab the vendingmachine input
+						//Grab the Vending Machine input
 						ItemSold = sys.nextLine();
 						
-						//Change the protocol depending on what the user enters
-						SetProtocol();
+						ItemSold = ItemSold.toUpperCase();
 						
-						//grab message to send and physical address of the client
-						String message =(Protocol + ":" + MacAddress + ":" + ItemSold);
+						//If ItemSold is not equal
+						if(!ItemSold.equals("")){
+							//Change the protocol depending on what the user enters
+							SetProtocol();
+							
+							//grab message to send and physical address of the client
+							String message =(Protocol + ":" + MacAddress + ":" + ItemSold);
 
-						toServer.writeUTF(message);
-						toServer.flush(); // clear path
+							toServer.writeUTF(message);
+							toServer.flush(); // clear path
+						}else{
+							//TO-DO throw an error to server saying the entered ItemSold was null and it cannot be null
+							ItemSold = "empty";
+						}
 					}
 					catch(IOException ex){
 						System.err.println(ex);
@@ -88,7 +96,7 @@ public class VendingMachine{
 	}
 	
 	private void SetProtocol(){
-		if(ItemSold.equals("Bye")){
+		if(ItemSold.equals("BYE")){
 			Protocol = "3";
 		}
 	}
