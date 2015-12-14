@@ -16,10 +16,12 @@ import javafx.stage.Stage;
 import util.DatabaseInterface;
 import util.Util;
 
+
+
 public class VendServer extends Application {
 	// Text area for displaying contents
 	private TextArea Log = new TextArea();
-
+	
 	//Setup the connection to the DB
 	Connection conn = null;
 	
@@ -41,10 +43,10 @@ public class VendServer extends Application {
 	String MacAddress;
 	String ItemSlot;
 	
-	boolean protocolFlag = false;
-	
 	//List of all clients threads that are handled by the server, unused currently
 	ArrayList<HandleAClient> list = new ArrayList<HandleAClient>();
+
+	private boolean shutdown = false;
 
 	@Override // Override the start method in the Application class
 	public void start(Stage primaryStage) {
@@ -124,40 +126,28 @@ public class VendServer extends Application {
 
 		/** Create a new thread to serve a single client */
 		public void run() {
-			
-			boolean shutdown = false;
-			
 			// Create data input and output streams
 			try {
 				inputFromClient = new ObjectInputStream(socket.getInputStream());
 				//outputToClient = new ObjectOutputStream(socket.getOutputStream());
 				
 				// Continuously serve the client
-				while (!shutdown) {
+				while (shutdown == false) {
 						// Receive message from the client
 						ListenForClient(inputFromClient);
+	
+						// Format message to SQL statement
+						SQLQuery = Util.toSQL(message, conn);
 						
-						//if(Protocol.equals("3")){
-							//Close the clients connection and end the thread
-							//Log.appendText("Connection closed by the client" + "\n");
-							//closeClientThread(shutdown);
-							//break;
-						//}else{
-							
-							// Format message to SQL statement
-							SQLQuery = Util.toSQL(message, conn);
+						HandleProtocol(Protocol, shutdown, inputFromClient);
 						
-							if(SQLQuery != null){
-								// Grabs the unsafe SQL in plain text
-								PlainTextSQL = Util.toSQL(message);
+						if(SQLQuery != null){
+							// Grabs the unsafe SQL in plain text
+							PlainTextSQL = Util.toSQL(message);
 						
-								// Run against DB
-								queryServer(SQLQuery, PlainTextSQL);
-							}
-							
-							HandleProtocol(Protocol, shutdown);
-							
-						//}
+							// Run against DB
+							queryServer(SQLQuery, PlainTextSQL);
+						}
 				}	
 			}catch (SQLException sqlE){
 				//Recoverable error
@@ -244,14 +234,14 @@ public class VendServer extends Application {
 	
 	private void closeClientThread(boolean shutdown){
 		//Close this thread if the connection to the client has been closed.
-		shutdown = true;
+		this.shutdown = true; //Pass by reference with this.shutdown otherwise the value will not change
 		Log.appendText("Closing thread for this client..." + "\n");
 		//Decrement the amount of clients connected
 		clientNo--;
-		Log.appendText(clientNo + " client(s) connected");
+		Log.appendText(clientNo + " client(s) connected" + "\n\n");
 	}
 	
-	private void HandleProtocol(String Protocol, boolean shutdown){
+	private void HandleProtocol(String Protocol, boolean shutdown, ObjectInputStream inputFromClient){
 		
 		char charProto = Protocol.charAt(0);
 		
@@ -259,15 +249,14 @@ public class VendServer extends Application {
 			case '2': // New vend machine protocol
 				//Because SQLQuery will be null if the machine was found, see Util.toSQL
 				if(SQLQuery != null){
-					Log.appendText("WARNING: Fill the new Vending Machine!" + "\n");
+					Log.appendText("WARNING: Fill the new Vending Machine!" + "\n\n");
 				}else{
-					Log.appendText("Found Vending Machine in Database!" + "\n");
+					Log.appendText("Found Vending Machine in Database!" + "\n\n");
 				}
 				break;
 			case '3': // Client leaving protocol
 				Log.appendText("Connection closed by the client" + "\n");
 				closeClientThread(shutdown);
-				protocolFlag = true;
 				break;
 		}
 		

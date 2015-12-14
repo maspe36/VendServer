@@ -75,6 +75,11 @@ public class VendingMachine{
 						if(!ItemSold.equals("")){
 							//Change the protocol depending on what the user enters
 							if(SetProtocol()){
+								//grab message to send and physical address of the client
+								String message =(Protocol + ":" + MacAddress + ":" + ItemSold);
+
+								toServer.writeUTF(message);
+								toServer.flush(); // clear path
 								System.exit(0); //close program if user typed bye
 							}
 							
