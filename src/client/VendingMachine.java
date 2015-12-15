@@ -102,6 +102,13 @@ public class VendingMachine{
 		writingMessage.start();
 	}
 	
+	/**
+	 * 
+	 * Changes the protocol depending on what the client has input.
+	 * 
+	 * @return True if protocol has been changed from default
+	 */
+	
 	private boolean SetProtocol(){
 		if(ItemSold.equals("BYE")){
 			Protocol = "3";
@@ -109,6 +116,11 @@ public class VendingMachine{
 		}
 		return false;
 	}
+	
+	/**
+	 * Sends a message with the startup protocol (2 at the moment) as soon as 
+	 * the Vending Machine has found and connected to the VendServer.
+	 */
 	
 	private void startUpMessage(){
 		try {

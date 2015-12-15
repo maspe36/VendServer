@@ -16,8 +16,6 @@ import javafx.stage.Stage;
 import util.DatabaseInterface;
 import util.Util;
 
-
-
 public class VendServer extends Application {
 	// Text area for displaying contents
 	private TextArea Log = new TextArea();
@@ -232,6 +230,12 @@ public class VendServer extends Application {
 		}
 	}
 	
+	/**
+	 * Writes to the server log and changes a flag to close the thread handling this client. 
+	 * Then decrements the number of clients connected and prints the amount connected currently.
+	 * 
+	 * @param shutdown Flags the thread to close on true
+	 */
 	private void closeClientThread(boolean shutdown){
 		//Close this thread if the connection to the client has been closed.
 		this.shutdown = true; //Pass by reference with this.shutdown otherwise the value will not change
@@ -241,6 +245,14 @@ public class VendServer extends Application {
 		Log.appendText(clientNo + " client(s) connected" + "\n\n");
 	}
 	
+	/**
+	 * Gives different messages depending on the different protocols. 2 returns whether or not the vending machine exists.
+	 * 3 closes the clients thread and logs it to the server log.
+	 * 
+	 * @param Protocol The protocol code sent at the beginning of the message sent from a client
+	 * @param shutdown Flag to close thread handling client
+	 * @param inputFromClient InputStream from client
+	 */
 	private void HandleProtocol(String Protocol, boolean shutdown, ObjectInputStream inputFromClient){
 		
 		char charProto = Protocol.charAt(0);
