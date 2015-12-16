@@ -130,7 +130,7 @@ public class VendServer extends Application {
 	 */
 	class HandleAClient implements Runnable {
 		private Socket socket; // A connected socket
-		ObjectInputStream inputFromClient;
+		DataInputStream inputFromClient;
 		//ObjectOutputStream outputToClient;
 		/** Construct a thread */
 		public HandleAClient(Socket socket) {
@@ -141,7 +141,7 @@ public class VendServer extends Application {
 		public void run() {
 			// Create data input and output streams
 			try {
-				inputFromClient = new ObjectInputStream(socket.getInputStream());
+				inputFromClient = new DataInputStream(socket.getInputStream());
 				//outputToClient = new ObjectOutputStream(socket.getOutputStream());
 				
 				// Continuously serve the client
@@ -191,7 +191,7 @@ public class VendServer extends Application {
 	 * @param inputFromClient ObjectInputStream
 	 * @throws IOException Connection has been lost to ObjectInputStream
 	 */
-	public void ListenForClient(ObjectInputStream inputFromClient)throws NullPointerException{
+	public void ListenForClient(DataInputStream inputFromClient)throws NullPointerException{
 		try {
 			message = inputFromClient.readUTF();
 
@@ -311,7 +311,7 @@ public class VendServer extends Application {
 	 * @param shutdown Flag to close thread handling client
 	 * @param inputFromClient InputStream from client
 	 */
-	private void HandleProtocol(String Protocol, boolean shutdown, ObjectInputStream inputFromClient){
+	private void HandleProtocol(String Protocol, boolean shutdown, DataInputStream inputFromClient){
 		
 		char charProto = Protocol.charAt(0);
 		

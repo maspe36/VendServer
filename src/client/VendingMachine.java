@@ -14,7 +14,7 @@ public class VendingMachine{
 	//ObjectInputStream isFromServer;
 
 	String chat;
-	static String ip = "localhost";
+	static String ip = "10.230.22.60";
 	
 	//Current format is P:MM-MM-MM-MM-MM-MM:XX 
 	//P = Protocol, X = ItemSlot(A1, A2...), and M = MacAddress
