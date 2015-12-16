@@ -1,6 +1,5 @@
 package client;
 
-import java.io.IOException;
 import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
@@ -10,11 +9,11 @@ import util.Util;
 
 public class VendingMachine{
 
-	ObjectOutputStream toServer;
+	DataOutputStream toServer;
 	//ObjectInputStream isFromServer;
 
 	String chat;
-	static String ip = "10.230.22.60";
+	static String ip = "localhost";
 	
 	//Current format is P:MM-MM-MM-MM-MM-MM:XX 
 	//P = Protocol, X = ItemSlot(A1, A2...), and M = MacAddress
@@ -40,7 +39,7 @@ public class VendingMachine{
 			@SuppressWarnings("resource")
 			Socket connectToServer = new Socket(ip, 8000);
 
-			toServer = new ObjectOutputStream(connectToServer.getOutputStream());
+			toServer = new DataOutputStream(connectToServer.getOutputStream());
 			toServer.flush();
 			//isFromServer = new ObjectInputStream(connectToServer.getInputStream());
 			System.out.println("Connected!");
