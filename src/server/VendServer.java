@@ -28,7 +28,8 @@ public class VendServer extends Application {
 	private int clientNo = 0;
 	
 	//global message var
-	private String message;
+	//private String message;
+	private String received;
 	
 	private PreparedStatement SQLQuery;
 	private String PlainTextSQL;
@@ -126,7 +127,8 @@ public class VendServer extends Application {
 	 */
 	class HandleAClient implements Runnable {
 		private Socket socket; // A connected socket
-		DataInputStream inputFromClient;
+		InputStream inputFromClient;
+		//DataInputStream inputFromClient;
 		//ObjectOutputStream outputToClient;
 		/** Construct a thread */
 		public HandleAClient(Socket socket) {
@@ -137,7 +139,7 @@ public class VendServer extends Application {
 		public void run() {
 			// Create data input and output streams
 			try {
-				inputFromClient = new DataInputStream(socket.getInputStream());
+				inputFromClient = socket.getInputStream();
 				//outputToClient = new ObjectOutputStream(socket.getOutputStream());
 				
 				// Continuously serve the client
@@ -146,13 +148,13 @@ public class VendServer extends Application {
 						ListenForClient(inputFromClient);
 	
 						// Format message to SQL statement
-						SQLQuery = Util.toSQL(message, conn);
+						SQLQuery = Util.toSQL(received, conn);
 						
 						HandleProtocol(Protocol, shutdown, inputFromClient);
 						
 						if(SQLQuery != null){
 							// Grabs the unsafe SQL in plain text
-							PlainTextSQL = Util.toSQL(message);
+							PlainTextSQL = Util.toSQL(received);
 						
 							// Run against DB
 							queryServer(SQLQuery, PlainTextSQL);
@@ -178,11 +180,21 @@ public class VendServer extends Application {
 	 * @param inputFromClient ObjectInputStream
 	 * @throws IOException Connection has been lost to ObjectInputStream
 	 */
-	public void ListenForClient(DataInputStream inputFromClient)throws NullPointerException{
+	public void ListenForClient(InputStream inputFromClient)throws NullPointerException{
 		try {
-			message = inputFromClient.readUTF();
+			//message = inputFromClient.readUTF();
+			// Receiving
+	        byte[] lenBytes = new byte[4];
+	        inputFromClient.read(lenBytes, 0, 4);
+	        int len = (((lenBytes[3] & 0xff) << 24) | ((lenBytes[2] & 0xff) << 16) |
+	                  ((lenBytes[1] & 0xff) << 8) | (lenBytes[0] & 0xff));
+	        byte[] receivedBytes = new byte[len];
+	        inputFromClient.read(receivedBytes, 0, len);
+	        received = new String(receivedBytes, 0, len);
 
-			parts = message.split(":");
+	        parts = received.split(":");
+	        
+			//parts = message.split(":");
 			
 			//For readability
 			Protocol = parts[0];
@@ -267,7 +279,7 @@ public class VendServer extends Application {
 	 * @param shutdown Flag to close thread handling client
 	 * @param inputFromClient InputStream from client
 	 */
-	private void HandleProtocol(String Protocol, boolean shutdown, DataInputStream inputFromClient){
+	private void HandleProtocol(String Protocol, boolean shutdown, InputStream inputFromClient){
 		
 		char charProto = Protocol.charAt(0);
 		
