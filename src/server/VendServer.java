@@ -11,16 +11,15 @@ import java.util.Date;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.control.TextArea;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import util.DatabaseInterface;
 import util.Util;
 
 public class VendServer extends Application {
 	// Text area for displaying contents
-	private TextFlow Log = new TextFlow();
+	private TextArea Log = new TextArea();
 	
 	//Setup the connection to the DB
 	Connection conn = null;
@@ -69,6 +68,8 @@ public class VendServer extends Application {
 		Log.prefWidthProperty().bind(scene.widthProperty());
 		Log.prefHeightProperty().bind(scene.heightProperty());
 		
+		Log.setWrapText(true);
+		
 		//New server thread
 		clientThread();
 	}
@@ -80,9 +81,8 @@ public class VendServer extends Application {
 				// Create a server socket
 				ServerSocket serverSocket = new ServerSocket(8000);
 				Platform.runLater( () -> {
-					Text DateText = new Text("VendServer started at " 
-						+ new Date() + '\n');
-					Log.getChildren().addAll(DateText);
+					Log.appendText("VendServer started at " 
+							+ new Date() + '\n');
 				});
 
 				DBConnect();
@@ -96,17 +96,13 @@ public class VendServer extends Application {
 
 					Platform.runLater( () -> {
 						// Display the client number
-						
-						Text NewClientThread = new Text("Client " + clientNo + " connected!" + '\n');
-						NewClientThread.setFill(Success);
-						Log.getChildren().addAll(NewClientThread);
+						Log.appendText("Client " + clientNo + " connected!" + '\n');
 
 						// Find the client's host name, and IP address
 						InetAddress inetAddress = socket.getInetAddress();
 
-						Text ClientIpText = new Text("Client " + clientNo + "'s IP Address is "
+						Log.appendText("Client " + clientNo + "'s IP Address is "
 								+ inetAddress.getHostAddress() + "\n");
-						Log.getChildren().addAll(ClientIpText);
 					});
 
 					// Create and start a new thread for the connection
@@ -164,20 +160,11 @@ public class VendServer extends Application {
 				}	
 			}catch (SQLException sqlE){
 				//Recoverable error
-				Platform.runLater( () -> {
-					Text sqlEError = new Text(sqlE.getMessage());
-					sqlEError.setFill(Error);
-					Log.getChildren().addAll(sqlEError);
-				});
+				Log.appendText(sqlE.getMessage());
 			}catch(NullPointerException | IOException ConnectionEx){
 				//Recoverable error
-				Platform.runLater( () -> {
-					Text ConnectionExError = new Text(ConnectionEx.getMessage());
-					ConnectionExError.setFill(Error);
-					Log.getChildren().addAll(ConnectionExError);
-				
-					closeClientThread(shutdown);
-				});
+				Log.appendText(ConnectionEx.getMessage());
+				closeClientThread(shutdown);
 			}
 		}
 	}
@@ -201,10 +188,8 @@ public class VendServer extends Application {
 			Protocol = parts[0];
 			MacAddress = parts[1];
 			ItemSlot = parts[2];
-			Platform.runLater( () -> {
-				Text MessageReceivedText = new Text("Message received from " + Protocol + ":" + MacAddress +  ": " +ItemSlot + "\n");
-				Log.getChildren().addAll(MessageReceivedText);
-			});
+			
+			Log.appendText("Message received from " + Protocol + ":" + MacAddress +  ": " +ItemSlot + "\n");
 		}catch (NullPointerException NPE){
 			throw new NullPointerException("ERROR: Connection to the client was lost!" + "\n");
 		}
@@ -229,17 +214,9 @@ public class VendServer extends Application {
 		
 		//Connect method returns a null connection if it was not a successful connection
 		if(conn != null){
-			Platform.runLater( () -> {
-				Text ConnectionSuccess = new Text("Successfully Connected to DataBase!" + "\n\n");
-				ConnectionSuccess.setFill(Success);
-				Log.getChildren().add(ConnectionSuccess);
-			});
+			Log.appendText("Successfully Connected to DataBase!" + "\n\n");
 		}else{
-			Platform.runLater( () -> {
-				Text ConnectionError = new Text("ERROR: Connection to the db timed out. Please check your connection." + "\n");
-				ConnectionError.setFill(Error);
-				Log.getChildren().addAll(ConnectionError);
-			});
+			Log.appendText("ERROR: Connection to the db timed out. Please check your connection." + "\n");
 		}
 	}
 	
@@ -250,32 +227,17 @@ public class VendServer extends Application {
 	 */
 	public void queryServer(PreparedStatement SQLQuery, String SQLClone){
 		try {
-			Platform.runLater( () -> {
-				Text SQLAttempt = new Text("Attempting to run the following SQL against the connected DB... \n '" + SQLClone + "'\n");
-				Log.getChildren().addAll(SQLAttempt);
-			});
+			Log.appendText("Attempting to run the following SQL against the connected DB... \n '" + SQLClone + "'\n");
 			//If it runs and there is a result
 			if(SQLQuery.executeUpdate() > 0){
-				Platform.runLater( () -> {
-					Text SQLSuccess = new Text("Success!" + "\n\n");
-					SQLSuccess.setFill(Success);
-					Log.getChildren().addAll(SQLSuccess);
-				});
+				Log.appendText("Success!" + "\n\n");
 			}else{
-				Platform.runLater( () -> {
 				//Runs but no rows affected
-					Text SQLKindaSuccess = new Text("WARNING: The SQL ran succesfully but there were no rows affected!" + "\n\n");
-					SQLKindaSuccess.setFill(Warning);
-					Log.getChildren().addAll(SQLKindaSuccess);
-				});
+				Log.appendText("WARNING: The SQL ran succesfully but there were no rows affected!" + "\n\n");
 			}
 			//Cannot have a negative quantity, EX Selling a product when there is zero in stock
 		} catch (SQLException e) {
-			Platform.runLater( () -> {
-				Text SQLError = new Text("ERROR: Quantity cannot be negative!" + "\n\n");
-				SQLError.setFill(Error);
-				Log.getChildren().addAll(SQLError);
-			});
+			Log.appendText("ERROR: Quantity cannot be negative!" + "\n\n");
 		}
 	}
 	
@@ -288,19 +250,13 @@ public class VendServer extends Application {
 	private void closeClientThread(boolean shutdown){
 		//Close this thread if the connection to the client has been closed.
 		this.shutdown = true; //Pass by reference with this.shutdown otherwise the value will not change
-		
-		Platform.runLater( () -> {
-			Text ClosingThread = new Text("Closing thread for this client..." + "\n");
-			Log.getChildren().addAll(ClosingThread);
-		});
+
+		Log.appendText("Closing thread for this client..." + "\n");
 		
 		//Decrement the amount of clients connected
 		clientNo--;
 		
-		Platform.runLater( () -> {
-			Text ClientsLeft = new Text(clientNo + " client(s) connected" + "\n\n");
-			Log.getChildren().addAll(ClientsLeft);
-		});
+		Log.appendText(clientNo + " client(s) connected" + "\n\n");
 	}
 	
 	/**
@@ -319,24 +275,13 @@ public class VendServer extends Application {
 			case '2': // New vend machine protocol
 				//Because SQLQuery will be null if the machine was found, see Util.toSQL
 				if(SQLQuery != null){
-					Platform.runLater( () -> {
-						Text SQLWarning = new Text("WARNING: Fill the new Vending Machine!" + "\n\n");
-						SQLWarning.setFill(Warning);
-						Log.getChildren().addAll(SQLWarning);
-					});
+					Log.appendText("WARNING: Fill the new Vending Machine!" + "\n\n");
 				}else{
-					Platform.runLater( () -> {
-						Text SQLSuccess = new Text("Found Vending Machine in Database!" + "\n\n");
-						SQLSuccess.setFill(Success);
-						Log.getChildren().addAll(SQLSuccess);
-					});
+					Log.appendText("Found Vending Machine in Database!" + "\n\n");
 				}
 				break;
 			case '3': // Client leaving protocol
-				Platform.runLater( () -> {
-					Text ConnectionClosed = new Text("Connection closed by the client" + "\n");
-					Log.getChildren().addAll(ConnectionClosed);
-				});
+				Log.appendText("Connection closed by the client" + "\n");
 				closeClientThread(shutdown);
 				break;
 		}
