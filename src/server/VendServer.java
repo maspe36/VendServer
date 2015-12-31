@@ -80,9 +80,10 @@ public class VendServer {
 		System.out.println("Driver Loaded");
 		
 		// address to connect to my database
-		conn = db.Connect("il-server-001.uccc.uc.edu\\mssqlserver2012",
+		conn = db.Connect("45.63.17.32",
+				"VendDB",
 		//conn = db.Connect("10.230.22.56\\DEVICESQLSERVER2",
-				"CandyServerLogin", 
+				"VendServer", 
 				"Maspe36Miami");
 		
 		//Connect method returns a null connection if it was not a successful connection

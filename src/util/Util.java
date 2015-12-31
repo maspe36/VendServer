@@ -17,7 +17,7 @@ public class Util {
 	 * @param conn Conenction to the DB
 	 * @return PreparedStatement of the SQL to be run
 	 */
-	public static PreparedStatement toSQL(String msg, Connection conn)throws SQLException{
+	public static PreparedStatement toSQL(String msg, Connection conn){
 		//Current format is MM-MM-MM-MM-MM-MM:XX 
 		//X = ItemSlot(A1, A2...), and M = MacAddress
 		String[] parts = msg.split(":");
@@ -35,18 +35,18 @@ public class Util {
 			case '1':
 				try {
 					pstmt = conn.prepareStatement
-						   ("UPDATE tVendingMachine_Product " +
+						   ("UPDATE tVendingMachine_Product vp " + 
+							"JOIN tVendingMachine vm ON " +
+							"vp.VendingMachineID = vm.VendingMachineID " +
 							"SET Quantity = (Quantity - 1) " +
-							"FROM dbo.tVendingMachine " + 
-							"INNER JOIN dbo.tVendingMachine_Product " +
-							"ON dbo.tVendingMachine.VendingMachineID = dbo.tVendingMachine_Product.VendingMachineID " +
 							"WHERE MacAddress = ? AND ItemSlot = ?;");
 					
 					pstmt.setString(1, MacAddress);
 					pstmt.setString(2, ItemSlot);
 					
 				} catch (SQLException e) {
-					throw new SQLException("ERROR: Could not run the ItemSale SQL Statement!");
+					System.err.println(e.getMessage());
+					//throw new SQLException("ERROR: Could not run the ItemSale SQL Statement!");
 				}
 				break;
 			case '2':
@@ -56,7 +56,7 @@ public class Util {
 					
 					PreparedStatement checkExistingMachine = conn.prepareStatement
 						   ("SELECT MacAddress " +
-							"FROM dbo.tVendingMachine " +
+							"FROM tVendingMachine " +
 						    "WHERE (MacAddress = ?)");
 					
 					checkExistingMachine.setString(1, MacAddress);
@@ -71,8 +71,8 @@ public class Util {
 						pstmt.setInt(2, LocationID);
 					}
 				} catch (SQLException e) {
-					System.out.println(e.getMessage());
-					throw new SQLException("ERROR: Could not run the NewVendingMachine SQL Statement!");
+					System.err.println(e.getMessage());
+					//throw new SQLException("ERROR: Could not run the NewVendingMachine SQL Statement!");
 				}
 				break;
 		}
@@ -105,12 +105,11 @@ public class Util {
 		switch(Protocol){
 			case '1': //ItemSold case
 				SQLQuery = 
-				"UPDATE tVendingMachine_Product " +
-				"SET Quantity = (Quantity - 1) " +
-				"FROM dbo.tVendingMachine " + 
-				"INNER JOIN dbo.tVendingMachine_Product " +
-				"ON dbo.tVendingMachine.VendingMachineID = dbo.tVendingMachine_Product.VendingMachineID " +
-				"WHERE MacAddress = '" + MacAddress + "' AND ItemSlot = '" + ItemSlot + "';";
+						"UPDATE tVendingMachine_Product vp " +
+						"JOIN tVendingMachine vm ON " +
+						"vp.VendingMachineID = vm.VendingMachineID " +
+						"SET Quantity = (Quantity - 1) " +
+						"WHERE MacAddress = '" + MacAddress + "' AND ItemSlot = '" + ItemSlot + "';";
 				break;
 			case '2': //New VendingMachine case
 				SQLQuery = 
@@ -164,8 +163,7 @@ public class Util {
 			    }
 			}
 		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 		return null;
 	}

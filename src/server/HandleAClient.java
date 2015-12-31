@@ -71,11 +71,9 @@ public class HandleAClient implements Runnable{
 						// Run against DB
 						queryServer(SQLQuery, PlainTextSQL);
 					}
-			}	
-		}catch (SQLException sqlE){
-			//Recoverable error
-			System.err.println(sqlE.getMessage());
-		}catch(NullPointerException | IOException ConnectionEx){
+			}
+		}
+		catch(NullPointerException | IOException ConnectionEx){
 			//Recoverable error
 			System.err.println(ConnectionEx.getMessage());
 			closeClientThread(shutdown);
@@ -134,7 +132,7 @@ public class HandleAClient implements Runnable{
 			}
 			//Cannot have a negative quantity, EX Selling a product when there is zero in stock
 		} catch (SQLException e) {
-			System.err.println("ERROR: Quantity cannot be negative!");
+			System.err.println(e.getMessage());
 		}
 	}
 	
