@@ -5,6 +5,7 @@ package server;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -43,7 +44,8 @@ public class HandleAClient implements Runnable{
 	private Socket socket; // A connected socket
 	InputStream inputFromClient;
 	
-	/** Construct a thread */
+	/** Construct a thread 
+	 * @param [] */
 	public HandleAClient(Socket socket) {
 		this.socket = socket;
 	}
@@ -145,7 +147,7 @@ public class HandleAClient implements Runnable{
 	private void closeClientThread(boolean shutdown){
 		//Close this thread if the connection to the client has been closed.
 		this.shutdown = true; //Pass by reference with this.shutdown otherwise the value will not change
-		System.out.println("Closing thread for this client...");
+		System.out.println("Closing thread for machine with id " + getMacAddress() + "...");
 		
 		//Decrement the amount of clients connected
 		VendServer.setClientNo(VendServer.getClientNo() - 1);
@@ -179,5 +181,13 @@ public class HandleAClient implements Runnable{
 				closeClientThread(shutdown);
 				break;
 		}
+	}
+
+	/**
+	 * Gets the current thread's MacAddress
+	 * @return MacAddress
+	 */
+	private String getMacAddress(){
+		return MacAddress;
 	}
 }
